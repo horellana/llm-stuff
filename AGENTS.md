@@ -93,6 +93,23 @@ position in this section.
 - **MUST** — Test behavior, not implementation. A refactor that preserves
   behavior must not break tests.
 - **DEFAULT** — Name the test after the behavior, not the method under call.
+- **DEFAULT — When delegating TDD work, one subagent per role.** The author of
+  a test must not be the author of the code that makes it pass; otherwise the
+  tests drift toward the implementation and stop being an independent check.
+  1. `tdd-test-writer` — writes the tests, shows each fails for the expected
+     reason, and reports the `git hash-object` of every test file it touched.
+  2. `tdd-implementer` — makes them pass without editing those test files. A
+     test it believes is wrong goes back to the orchestrator, not into an edit.
+  3. `doc-writer` — updates docs and config templates; may run in parallel with
+     step 2, since the tests already fix the behavior.
+  4. `reviewer` — read-only; re-runs the checks, compares test-file hashes
+     against step 1, and reports findings.
+
+  The main session orchestrates: it passes each handoff, owns commits, hands
+  the PR to `pr-manager` (§9), and decides on reviewer findings. Applies even
+  when the request says "a subagent"; only an explicit instruction to use a
+  single agent overrides it. Skip the split for trivial changes (a typo, a
+  one-line fix with no new test).
 
 ## 3. Data and distributed systems
 
@@ -189,9 +206,24 @@ position in this section.
 - **DEFAULT** — Prefer boring and proven over novel, absent a concrete written
   reason.
 
+## 9. Pull requests and merges
+
+- **MUST** — PR titles and descriptions are written in English, whatever
+  language the conversation is in.
+- **MUST — Merging is the user's call.** No agent merges a PR, pushes directly
+  to an integration or production branch, or enables auto-merge without the
+  user's explicit approval for that specific PR in the current conversation.
+  Merges into production are never automated.
+- **DEFAULT** — Branch flow: topic branches (`feat/*`, `fix/*`, …) → integration
+  branch → production branch. Each project's `CLAUDE.md` declares both, e.g.
+  `Integration branch: dev` and `Production branch: main`. If either is
+  undeclared, ask rather than guess.
+- **DEFAULT** — Delegate opening PRs and preparing merges to the `pr-manager`
+  subagent. It reports back; the main session asks the user and runs the merge.
+
 ---
 
-## 9. Known tensions between these sources
+## 10. Known tensions between these sources
 
 These books do not agree. When they collide, choose explicitly:
 
