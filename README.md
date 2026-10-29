@@ -33,15 +33,20 @@ session to load the changes.
 
 | Agent | Role |
 |---|---|
-| `tdd-test-writer` | Writes the failing tests and proves they fail. Never writes production code. |
+| `test-planner` | Read-only. Decides which cases to test, at which level, and what to leave out. Raises open questions. |
+| `tdd-test-writer` | Implements the plan as failing tests and proves they fail. Never writes production code. |
 | `tdd-implementer` | Makes the tests pass without editing them. |
 | `doc-writer` | Updates docs and config templates. Never touches code or tests. |
-| `reviewer` | Read-only. Re-runs checks and confirms tests were not edited after the red phase. |
+| `reviewer` | Read-only. Re-runs checks, confirms tests were not edited after the red phase, and checks coverage against the plan. |
 | `pr-manager` | Opens PRs with English titles and descriptions, and prepares merges. Never merges. |
 
-Delegated TDD work runs in this order: `tdd-test-writer` → `tdd-implementer`
-(with `doc-writer` in parallel) → `reviewer` → `pr-manager`. The main session
-passes each handoff and owns commits; merges always wait for the user.
+Delegated TDD work runs in this order: `test-planner` → `tdd-test-writer` →
+`tdd-implementer` (with `doc-writer` in parallel) → `reviewer` → `pr-manager`.
+The main session passes each handoff and owns commits. The user sees the test
+plan only when it has open questions, and merges always wait for the user.
+
+`test-planner` runs on Opus, because a case missing from the plan goes
+untested all the way down; the other agents run on Sonnet.
 
 ## Per-project setup
 
