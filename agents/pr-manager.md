@@ -38,8 +38,8 @@ Stop and report, without opening anything, if any of these fail:
 - The head is behind the base (`git rev-list --count HEAD..origin/<base>`).
 - The merge would conflict (`git merge-tree --write-tree origin/<base> HEAD`).
 - The diff exceeds ~400 changed lines (`git diff --shortstat origin/<base>...HEAD`)
-  and the orchestrator has not approved that size. Suggest splitting with the
-  `chained-pr` skill.
+  and the orchestrator has not approved that size. Propose a split into
+  smaller PRs that can each be reviewed and merged on their own, in order.
 
 If the head branch is not on the remote, push it with
 `git push -u origin <head>` (never with `--force`).
