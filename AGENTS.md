@@ -96,20 +96,27 @@ position in this section.
 - **DEFAULT — When delegating TDD work, one subagent per role.** The author of
   a test must not be the author of the code that makes it pass; otherwise the
   tests drift toward the implementation and stop being an independent check.
-  1. `tdd-test-writer` — writes the tests, shows each fails for the expected
-     reason, and reports the `git hash-object` of every test file it touched.
-  2. `tdd-implementer` — makes them pass without editing those test files. A
+  Deciding what to test also has its own owner, so coverage is planned rather
+  than left to whoever writes the tests.
+  1. `test-planner` — read-only; turns the requirement into a plan of cases,
+     each with its level (unit, integration, e2e), priority, and reason, plus
+     what is deliberately left untested and any open questions.
+  2. `tdd-test-writer` — implements every case in the plan, shows each fails
+     for the expected reason, and reports the `git hash-object` of every test
+     file it touched.
+  3. `tdd-implementer` — makes them pass without editing those test files. A
      test it believes is wrong goes back to the orchestrator, not into an edit.
-  3. `doc-writer` — updates docs and config templates; may run in parallel with
-     step 2, since the tests already fix the behavior.
-  4. `reviewer` — read-only; re-runs the checks, compares test-file hashes
-     against step 1, and reports findings.
+  4. `doc-writer` — updates docs and config templates; may run in parallel with
+     step 3, since the tests already fix the behavior.
+  5. `reviewer` — read-only; re-runs the checks, compares test-file hashes
+     against step 2, checks coverage against the plan, and reports findings.
 
   The main session orchestrates: it passes each handoff, owns commits, hands
-  the PR to `pr-manager` (§9), and decides on reviewer findings. Applies even
-  when the request says "a subagent"; only an explicit instruction to use a
-  single agent overrides it. Skip the split for trivial changes (a typo, a
-  one-line fix with no new test).
+  the PR to `pr-manager` (§9), and decides on reviewer findings. It takes the
+  plan to the user only when `test-planner` raises open questions; otherwise
+  the plan goes straight to step 2. Applies even when the request says "a
+  subagent"; only an explicit instruction to use a single agent overrides it.
+  Skip the split for trivial changes (a typo, a one-line fix with no new test).
 
 ## 3. Data and distributed systems
 

@@ -1,6 +1,6 @@
 ---
 name: tdd-test-writer
-description: Red phase of delegated TDD. Writes failing tests for a specified behavior and proves they fail for the expected reason. Never writes production code. Use as the first step whenever TDD work is delegated.
+description: Red phase of delegated TDD. Implements the test plan from test-planner as failing tests and proves they fail for the expected reason. Never writes production code. Use after test-planner, once its plan has no open questions.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 ---
@@ -17,9 +17,10 @@ and it is not allowed to change your tests, so they must be right.
   tests before writing new ones.
 - Do not create or edit production code, stubs included. If a test cannot even
   compile because a symbol does not exist yet, that is an acceptable red; say so.
-- Cover the edge cases the orchestrator listed. If the spec is ambiguous in a
-  way that changes what the test asserts, stop and report the ambiguity instead
-  of picking one.
+- Implement every case in the test plan at the level it names. Do not add,
+  drop, or move cases between levels on your own. If a case cannot be written
+  as planned (the level cannot run, the behavior is not observable), or the
+  plan is ambiguous about what to assert, stop and report it.
 - Do not commit or push unless the orchestrator asks.
 
 ## Verify
@@ -31,6 +32,6 @@ for an unrelated setup error.
 ## Report
 
 - Test files touched, and for each the output of `git hash-object <file>`.
-- Each test name and the behavior it pins down.
+- For each plan ID (T1, T2, …), the test name or names that implement it.
 - The exact command you ran and a short excerpt of the failure output.
 - Anything you could not test and why.
