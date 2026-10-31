@@ -6,6 +6,8 @@ My global instructions and subagents for coding agents.
   **MUST** / **DEFAULT** / **JUDGE**. Installed as Claude Code's global
   `CLAUDE.md`.
 - `agents/`: Claude Code subagent definitions that those rules delegate to.
+- `hooks/`: Claude Code hooks that back those rules up where the model alone
+  is not reliable.
 
 ## Install
 
@@ -23,11 +25,39 @@ mkdir -p ~/.claude/agents
 [ -e ~/.claude/CLAUDE.md ] && [ ! -L ~/.claude/CLAUDE.md ] && mv ~/.claude/CLAUDE.md ~/.claude/CLAUDE.md.bak
 ln -sfn "$REPO/AGENTS.md" ~/.claude/CLAUDE.md
 for f in "$REPO"/agents/*.md; do ln -sfn "$f" ~/.claude/agents/; done
+mkdir -p ~/.claude/hooks
+ln -sfn "$REPO/hooks/delegation-reminder.sh" ~/.claude/hooks/
 ```
 
 An existing `CLAUDE.md` is kept as `CLAUDE.md.bak`. Agent files with the same
-names in `~/.claude/agents/` are replaced by links. Start a new Claude Code
-session to load the changes.
+names in `~/.claude/agents/` are replaced by links.
+
+Then register the hook in `~/.claude/settings.json` (requires `jq`):
+
+```json
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "~/.claude/hooks/delegation-reminder.sh" }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Start a new Claude Code session to load the changes.
+
+## Hooks
+
+`delegation-reminder.sh` runs on every prompt. When the prompt is a slash
+command whose name contains `apply` or `implement` (for example
+`/opsx:apply`), it adds a reminder that the command's steps define what to
+build, not who builds it, so the work still goes through the subagents. It
+never blocks a prompt. A skill the model picks on its own, without a slash
+command, is covered only by the rule in `AGENTS.md`.
 
 ## Agents
 

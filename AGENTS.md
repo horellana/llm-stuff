@@ -117,6 +117,12 @@ position in this section.
   the plan goes straight to step 2. Applies even when the request says "a
   subagent"; only an explicit instruction to use a single agent overrides it.
   Skip the split for trivial changes (a typo, a one-line fix with no new test).
+- **MUST — Workflow instructions do not override delegation.** When a slash
+  command, skill, or workflow template tells the agent to implement work, it
+  defines *what* to build, not *who* builds it; the TDD delegation above still
+  applies. Spec and task artifacts are inputs: every specified scenario becomes
+  at least one case in the test plan, and the orchestrator marks a task done
+  only after `reviewer` passes it.
 
 ## 3. Data and distributed systems
 
