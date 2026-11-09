@@ -69,14 +69,22 @@ command, is covered only by the rule in `AGENTS.md`.
 | `doc-writer` | Updates docs and config templates. Never touches code or tests. |
 | `reviewer` | Read-only. Re-runs checks, confirms tests were not edited after the red phase, and checks coverage against the plan. |
 | `pr-manager` | Opens PRs with English titles and descriptions, and prepares merges. Never merges. |
+| `release-manager` | Plans releases (artifact, baseline, checks, rollback), then deploys one approved environment at a time by the project's runbook, verifies, and rolls back immediately on a failed check. |
 
 Delegated TDD work runs in this order: `test-planner` → `tdd-test-writer` →
 `tdd-implementer` (with `doc-writer` in parallel) → `reviewer` → `pr-manager`.
 The main session passes each handoff and owns commits. The user sees the test
 plan only when it has open questions, and merges always wait for the user.
 
-`test-planner` runs on Opus, because a case missing from the plan goes
-untested all the way down; the other agents run on Sonnet.
+Releases run separately, after merge: `release-manager` returns a plan, the
+user approves it once per environment, and the agent deploys that environment,
+verifies it, and rolls back on its own if a check misses its criterion. It
+deploys only by a project's runbook (for example a deploy skill); without one,
+it drafts a runbook for review.
+
+`test-planner` and `release-manager` run on Opus: a case missing from the plan
+goes untested all the way down, and a release mistake reaches production. The
+other agents run on Sonnet.
 
 ## Per-project setup
 

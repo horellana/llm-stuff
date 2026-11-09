@@ -219,7 +219,7 @@ position in this section.
 - **DEFAULT** — Prefer boring and proven over novel, absent a concrete written
   reason.
 
-## 9. Pull requests and merges
+## 9. Pull requests, merges, and releases
 
 - **MUST** — PR titles and descriptions are written in English, whatever
   language the conversation is in.
@@ -233,6 +233,19 @@ position in this section.
   undeclared, ask rather than guess.
 - **DEFAULT** — Delegate opening PRs and preparing merges to the `pr-manager`
   subagent. It reports back; the main session asks the user and runs the merge.
+- **MUST — No deploy without an approved plan.** Before any environment is
+  touched, the plan names the exact artifact, the baseline to capture, each
+  verification check with its pass criterion, the rollback steps and target,
+  and what cannot be rolled back. Each environment needs the user's explicit
+  approval for that release; production is never deployed without it.
+- **MUST** — Promote the same artifact through every environment; never
+  rebuild between them, or what was verified is not what ships.
+- **DEFAULT** — When a check misses its pre-approved criterion, roll back
+  immediately and report; approving the plan approves that rollback. A
+  rollback that has never been exercised is a risk to state in the plan.
+- **DEFAULT** — Delegate release planning and execution to the
+  `release-manager` subagent. How to deploy comes from each project's runbook;
+  without one, it drafts a runbook for review instead of deploying.
 
 ---
 
