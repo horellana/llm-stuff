@@ -127,7 +127,7 @@ Tests: `python3 -m unittest discover -s tests` from the repo root.
 | `tdd-test-writer` | Implements the plan as failing tests and proves they fail. Never writes production code. |
 | `tdd-implementer` | Makes the tests pass without editing them. |
 | `doc-writer` | Updates docs and config templates. Never touches code or tests. |
-| `reviewer` | Read-only. Re-runs checks, diffs the tests against the red commit to confirm they were not edited, and checks coverage against the plan. |
+| `reviewer` | Read-only. Re-runs checks, diffs the tests against their red commit to confirm they were not edited, and checks coverage against the plan. |
 | `pr-manager` | Opens PRs with English titles and descriptions, and prepares merges. Never merges. |
 | `release-manager` | Plans releases (artifact, baseline, checks, rollback), then deploys one approved environment at a time by the project's runbook, verifies, and rolls back immediately on a failed check. Its prompt starts with `mode: plan` or `mode: execute <environment>` (`AGENTS.md` §9). |
 
