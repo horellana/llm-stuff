@@ -117,6 +117,22 @@ position in this section.
   the plan goes straight to step 2. Applies even when the request says "a
   subagent"; only an explicit instruction to use a single agent overrides it.
   Skip the split for trivial changes (a typo, a one-line fix with no new test).
+- **DEFAULT — Fan out by slice, not by role.** One `test-planner` sees the
+  whole change, since the cases between parts are what a split planner misses;
+  its plan may divide the work into independent slices. Then run one
+  `tdd-test-writer` → `tdd-implementer` chain per slice at the same time, each
+  in its own local branch and git worktree, editing only the files its slice
+  owns. A slice goes to its implementer as soon as its own tests are red,
+  without waiting for the others. The shared slice runs first, and cases that
+  span slices run after the slice branches are merged. Docs belong to no slice;
+  `doc-writer` and `reviewer` each run once. The orchestrator creates each
+  worktree without leaving the main checkout, makes it able to run the tests,
+  passes its absolute path to the slice's agents, merges the branches back, and
+  removes the worktrees after `reviewer` passes. A slice that needs a file it
+  does not own goes back to the orchestrator instead of editing it. Run at most
+  four slices at once, and never two at once that share an external resource
+  (database, fixed port, container). A plan with one slice runs the sequential
+  flow above.
 - **MUST — Workflow instructions do not override delegation.** When a slash
   command, skill, or workflow template tells the agent to implement work, it
   defines *what* to build, not *who* builds it; the TDD delegation above still

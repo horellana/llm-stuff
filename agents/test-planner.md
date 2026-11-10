@@ -57,6 +57,25 @@ For each requirement, walk this list and keep only what applies:
 - List what you deliberately leave untested, and why. A plan that tests
   everything is not a plan.
 
+## Slices
+
+Divide the work so independent parts can be built in parallel, each in its own
+worktree. Keep a small change, or one whose parts are not truly independent, as
+a single slice.
+
+- A slice owns a set of files, tests and production code, including files it
+  will create. Each file belongs to at most one slice; parts that must edit the
+  same file are one slice.
+- `S0` holds what several slices need: shared fixtures and helpers, schemas,
+  migrations, dependency manifests and lockfiles. It runs before the others.
+  Omit it if nothing is shared.
+- `S1`, `S2`, … run in parallel, at most four. Each may depend on `S0`, never
+  on another parallel slice; if it would, merge the two.
+- `SJ` holds the cases that exercise more than one slice. They are written
+  after the slice branches are merged. Omit it if there are none.
+- Name the external resources each slice's tests use (database, fixed port,
+  container), so slices that share one do not run at the same time.
+
 ## Open questions
 
 When the requirement is ambiguous in a way that changes what a test asserts, do
@@ -71,4 +90,6 @@ written; with none, the plan goes straight to tdd-test-writer.
 2. **Plan**: a table with columns ID, Requirement, Case, Level, Priority, Why
    this level. Use IDs T1, T2, … so later steps can refer to them.
 3. **Out of scope**: what is not tested and why.
-4. **Open questions**: numbered, each with its options; or "None".
+4. **Slices**: a table with columns Slice, Plan IDs, Files owned, External
+   resources; every plan ID in exactly one slice. Or "Single slice".
+5. **Open questions**: numbered, each with its options; or "None".

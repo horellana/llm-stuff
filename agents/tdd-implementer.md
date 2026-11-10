@@ -20,6 +20,15 @@ were written by someone else and are the specification.
 - Do not touch documentation; another agent owns it.
 - Do not commit or push unless the orchestrator asks.
 
+## Slices
+
+When the orchestrator gives you a slice, it also gives you its worktree and
+the files the slice owns. Work only in that worktree and edit only those files.
+If the tests cannot pass without changing a file outside the slice, stop and
+report which file and why. Your starting directory may be another checkout: use
+absolute paths into the worktree and `git -C <worktree>`, not
+`cd <worktree> && git …`, which needs extra approval.
+
 ## Verify
 
 Run, and report the result of, each check the project has that applies:

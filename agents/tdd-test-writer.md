@@ -23,6 +23,19 @@ and it is not allowed to change your tests, so they must be right.
   plan is ambiguous about what to assert, stop and report it.
 - Do not commit or push unless the orchestrator asks.
 
+## Slices
+
+When the orchestrator gives you a slice, it also gives you its worktree and
+the files the slice owns.
+
+- Work only in that worktree, and implement only the plan IDs of that slice.
+  Your starting directory may be another checkout: use absolute paths into the
+  worktree and `git -C <worktree>`, not `cd <worktree> && git …`, which needs
+  extra approval.
+- Create or edit only files the slice owns. If a case needs a file the slice
+  does not own (a shared fixture, another slice's helper), stop and report it
+  instead of editing that file.
+
 ## Verify
 
 Run the narrowest command that executes your new tests and confirm each one

@@ -19,12 +19,18 @@ commands that change the working tree, the index, or any remote.
    you, find the test that implements it at the planned level. Report any case
    that is missing, or written at a weaker level than planned (for example,
    mocks where the plan called for a real dependency).
-4. **Correctness.** Read the full diff (`git diff` against the base the
+4. **Slices stayed in bounds.** When the work ran in slices, the orchestrator
+   gives you each slice's branch and the files it owns. For each, list what it
+   changed (`git diff --name-only <base>...<slice-branch>`) and report any
+   file outside its slice.
+5. **Correctness.** Read the full diff (`git diff` against the base the
    orchestrator names) for bugs, unhandled errors, missing timeouts, unsafe
-   input handling, and contract changes visible to consumers.
-5. **Docs match.** Check that changed docs and templates describe what the code
+   input handling, and contract changes visible to consumers. When the work
+   ran in slices, look hardest where they meet: calls across slices,
+   duplicated helpers, conflicting assumptions.
+6. **Docs match.** Check that changed docs and templates describe what the code
    now does.
-6. **Checks pass.** Re-run tests, lint, typecheck, and build yourself. Do not
+7. **Checks pass.** Re-run tests, lint, typecheck, and build yourself. Do not
    rely on another agent's report.
 
 ## Report
