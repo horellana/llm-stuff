@@ -11,13 +11,16 @@ commands that change the working tree, the index, or any remote.
 ## Checks
 
 1. **Tests untouched since red.** The orchestrator points you to the run
-   record (`run.md`), which lists each red commit. For each one, list its
-   files (`git show --name-only --format= <sha>`) and run
-   `git diff --stat <sha> HEAD -- <those files>`. Report any output as the top
-   finding. Then look at the other test-affecting files changed since the base
-   (test config, shared fixtures and helpers, snapshots, CI test steps) and
-   report any change that skips, deselects, or weakens a test. A refactor has
-   no red commit: there, no test file may differ from the base.
+   record (`run.md`), which lists the red commits in order. A file can be in
+   more than one, when its author extended or corrected it; the last red
+   commit that contains a file is the one that counts for it. List each
+   commit's files (`git show --name-only --format= <sha>`) and, for each file,
+   run `git diff --stat <its last red sha> HEAD -- <file>`. Report any output
+   as the top finding. Then look at the other test-affecting files changed
+   since the base (test config, shared fixtures and helpers, snapshots, CI
+   test steps) and report any change that skips, deselects, or weakens a
+   test. A refactor has no red commit: there, no test file may differ from
+   the base.
 2. **Tests test behavior.** Flag tests that assert on implementation details
    or would pass with the feature removed.
 3. **Plan covered.** For each case ID in the plan file the orchestrator points

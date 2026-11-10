@@ -92,15 +92,19 @@ Protected branches are the union of:
 - `main` and `master`.
 
 It also asks when it cannot determine a push destination (`--all`, `--mirror`,
-a refspec with `*` or shell expansion, a detached HEAD, an unknown option, a
-directory that is not a resolvable git repository) or cannot parse a command
-that mentions `git` or `gh`. It never allows or denies on its own, and it
+a wildcard, brace or shell expansion in the push arguments, a detached HEAD,
+an unknown option, `push.default=matching`, a directory that is not a
+resolvable git repository) or cannot parse a command that mentions `git` or
+`gh`. It never allows or denies on its own, and it
 ignores `git push --dry-run`.
 
-Not covered: commands run over `ssh`, shell aliases and functions, scripts that
-push or merge internally, `curl` against the GitHub API, a substitution inside
-the body of an unquoted heredoc, and Claude Code versions where the subagent
-tool is not named `Agent`. It is a backstop for the direct forms, not a
+Not covered: commands run over `ssh`; shell and git aliases, and shell
+functions; scripts that push or merge internally, including a script given to
+a shell on standard input (heredoc, here-string, or pipe); a command name that
+comes from a variable; shells other than `bash`, `sh` and `zsh`; `curl`
+against the GitHub API; a substitution inside the body of an unquoted heredoc;
+and Claude Code versions where the subagent tool is not named `Agent`. It is a
+backstop for a push or merge written as a command on the command line, not a
 sandbox.
 
 Requirements: `python3` (written for 3.8 or later, verified only on 3.9.6) and

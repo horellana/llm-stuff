@@ -182,9 +182,12 @@ Spawn `reviewer` with the paths of `plan.md` and `run.md` and the base ref. It
 re-runs every check, compares against the red commits, and checks that each
 slice stayed within its files.
 
-You decide on each finding. A fix goes through the same roles: a wrong test to
-`tdd-test-writer` (a new red commit), wrong code to `tdd-implementer`. Review
-again after fixes. Mark a task done only after `reviewer` passes it.
+You decide on each finding. A fix goes through the same roles, test first: a
+wrong or missing test to `tdd-test-writer`, then the code to
+`tdd-implementer`. Commit the writer's changes as a further red commit and add
+its SHA to `run.md` after the earlier ones; for a file that is in several red
+commits, the last one is the reference. Review again after fixes. Mark a task
+done only after `reviewer` passes it.
 
 ## 6. Record the outcome
 
