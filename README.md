@@ -76,6 +76,13 @@ Delegated TDD work runs in this order: `test-planner` → `tdd-test-writer` →
 The main session passes each handoff and owns commits. The user sees the test
 plan only when it has open questions, and merges always wait for the user.
 
+When the plan divides the work into independent slices, the writer and
+implementer steps run once per slice, at the same time, each slice in its own
+local branch and git worktree and limited to the files it owns. A shared slice
+(fixtures, schemas, migrations) runs first; cases that span slices are written
+after the slices are merged. Planning, docs, and review stay single, so one
+agent still sees the whole change. At most four slices run at once.
+
 Releases run separately, after merge: `release-manager` returns a plan, the
 user approves it once per environment, and the agent deploys that environment,
 verifies it, and rolls back on its own if a check misses its criterion. It
