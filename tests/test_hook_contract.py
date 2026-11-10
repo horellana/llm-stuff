@@ -151,6 +151,15 @@ class HookContractTest(GateCase):
         self.assert_ask(result, "could not be determined")
 
 
+    # T101
+    def test_parse_failure_is_detected_on_quote_joined_git_names(self):
+        repo = self.sb.make_repo()
+        self.check_ask(
+            "g''it push origin \"main", repo, "could not parse", section=False
+        )
+        self.check_silent('ec\'\'ho "unterminated', repo)
+
+
 if __name__ == "__main__":
     import unittest
 

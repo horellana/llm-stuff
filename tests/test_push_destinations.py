@@ -349,6 +349,56 @@ class PushDestinationTest(GateCase):
         )
 
 
+    # T102
+    def test_expansion_in_any_word_after_push_leaves_the_destination_undetermined(self):
+        self.check_ask(
+            [
+                "git push $ARGS",
+                'git push "$@"',
+                'git push "$REMOTE" feature',
+                "git push origin feature $EXTRA",
+            ],
+            self.basic,
+            UNDETERMINED,
+        )
+
+    # T103
+    def test_braces_and_glob_characters_in_a_refspec_leave_it_undetermined(self):
+        self.check_ask(
+            [
+                "git push origin {main,x}",
+                "git push origin ma{in,}",
+                "git push origin 'feat/?'",
+                "git push origin 'rel[ea]se'",
+            ],
+            self.basic,
+            UNDETERMINED,
+        )
+
+    # T111
+    def test_push_without_refspec_asks_when_config_widens_the_destination(self):
+        matching = self.sb.make_repo("matching")
+        self.sb.git(matching, "config", "push.default", "matching")
+        self.check_ask(
+            ["git push", "git push origin"], matching, UNDETERMINED
+        )
+        self.check_silent("git push origin feature", matching)
+
+        remote_push = self.sb.make_repo("remote_push")
+        self.sb.git(
+            remote_push, "remote", "add", "origin", "https://example.invalid/o/r.git"
+        )
+        self.sb.git(
+            remote_push, "config", "remote.origin.push",
+            "refs/heads/feature:refs/heads/main",
+        )
+        self.check_ask("git push", remote_push, UNDETERMINED)
+
+        simple = self.sb.make_repo("simple")
+        self.sb.git(simple, "config", "push.default", "simple")
+        self.check_silent("git push", simple)
+
+
 if __name__ == "__main__":
     import unittest
 

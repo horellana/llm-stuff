@@ -104,6 +104,21 @@ class ProtectedBranchesTest(GateCase):
         self.check_silent("git push origin nightly", repo)
 
 
+    # T108
+    def test_punctuation_after_a_declared_name_is_ignored(self):
+        variants = [
+            ("Production branch: prod.", "prod"),
+            ("Integration branch: `dev`, then main", "dev"),
+            ("Production branch: prod;", "prod"),
+            ("Production branch: prod)", "prod"),
+        ]
+        for index, (line, name) in enumerate(variants):
+            with self.subTest(declaration=line):
+                repo = self.sb.make_repo("punct%d" % index)
+                self.sb.declare(repo, line)
+                self.check_ask("git push origin %s" % name, repo, protected(name))
+
+
 if __name__ == "__main__":
     import unittest
 

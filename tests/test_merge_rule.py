@@ -96,6 +96,19 @@ class MergeRuleTest(GateCase):
         )
 
 
+    # T107
+    def test_merge_after_other_words_following_gh_pr_asks(self):
+        self.check_ask(
+            ["gh pr -R o/r merge 7", "gh pr --repo o/r merge 7 --squash"],
+            self.cwd,
+            MERGE,
+        )
+        self.check_silent(
+            ["gh pr -R o/r view 7", 'gh pr comment 7 --body "please merge this"'],
+            self.cwd,
+        )
+
+
 if __name__ == "__main__":
     import unittest
 

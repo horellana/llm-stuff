@@ -151,6 +151,33 @@ class PushRepoDirTest(GateCase):
         )
 
 
+    # T109
+    def test_git_dir_or_work_tree_assigned_before_git_makes_the_repo_unknown(self):
+        repo = self.sb.make_repo()
+        self.check_ask(
+            [
+                "GIT_DIR=/tmp/x/.git git push origin feature",
+                "GIT_WORK_TREE=/tmp/x git push origin feature",
+                "env GIT_DIR=/tmp/x/.git git push origin feature",
+            ],
+            repo,
+            UNDETERMINED,
+        )
+        self.check_silent("GIT_TRACE=1 git push origin feature", repo)
+
+    # T110
+    def test_cd_inside_a_subshell_does_not_leak_past_the_parenthesis(self):
+        a, _b = self.sb.siblings()
+        self.check_ask("(cd ../b && git push origin prod)", a, PROD)
+        self.check_silent(
+            [
+                "(cd ../b); git push origin prod",
+                "echo $(cd ../b); git push origin prod",
+            ],
+            a,
+        )
+
+
 if __name__ == "__main__":
     import unittest
 

@@ -162,6 +162,61 @@ class CommandParsingTest(GateCase):
         self.check_silent(["bash -l ./run.sh", "bash -e deploy.sh"], self.sb.root)
 
 
+    # T100
+    def test_quote_split_command_names_are_joined_before_matching(self):
+        self.check_ask("g''h pr merge 7", self.repo, MERGE)
+        self.check_ask(
+            ["g''it pus''h origin main", '"g"it push origin main'], self.repo, MAIN
+        )
+        self.check_silent("ech''o hello", self.repo)
+
+    # T104
+    def test_dollar_single_quote_strings_are_quoted_words_not_expansions(self):
+        self.check_ask(
+            ["$'git' push origin main", "bash -c $'git push origin main'"],
+            self.repo,
+            MAIN,
+        )
+        self.check_ask("sh -c $'gh pr merge 7'", self.repo, MERGE)
+        self.check_silent("echo $'git push origin main'", self.repo)
+
+    # T105
+    def test_a_shell_c_flag_is_found_anywhere_among_the_shell_arguments(self):
+        self.check_ask(
+            [
+                "bash --rcfile /dev/null -c 'git push origin main'",
+                "bash --init-file /dev/null -c 'git push origin main'",
+                "bash -co pipefail 'git push origin main'",
+                "bash -o pipefail -c 'git push origin main'",
+            ],
+            self.repo,
+            MAIN,
+        )
+        self.check_silent(
+            ["bash -c 'echo hi'", "bash --rcfile /dev/null -c 'git status'"],
+            self.repo,
+        )
+
+    # T106
+    def test_unknown_git_global_options_do_not_hide_a_push(self):
+        self.check_ask(
+            [
+                "git --attr-source HEAD push origin main",
+                "git --no-optional-locks push origin main",
+                "git --made-up-option value push origin main",
+            ],
+            self.repo,
+            MAIN,
+        )
+        self.check_silent(
+            [
+                "git --no-optional-locks push origin feature",
+                "git --no-optional-locks status",
+            ],
+            self.repo,
+        )
+
+
 if __name__ == "__main__":
     import unittest
 
