@@ -34,6 +34,20 @@ LONG_VALUE = frozenset("push-option receive-pack exec recurse-submodules".split(
 LONG_WIDE = frozenset("all branches mirror prune repo".split())  # dest unknown
 SHORT_FLAGS = frozenset("vqdnfu46")
 
+# git options accepted before the subcommand (git 2.50, `git --help`).
+GIT_GLOBAL_FLAGS = frozenset(
+    "-v --version -h --help --html-path --man-path --info-path -p --paginate "
+    "-P --no-pager --no-replace-objects --no-lazy-fetch --no-optional-locks "
+    "--no-advice --bare --literal-pathspecs --glob-pathspecs "
+    "--noglob-pathspecs --icase-pathspecs".split()
+)
+GIT_GLOBAL_VALUE = ("-c", "--namespace", "--super-prefix", "--config-env")
+
+# Scope markers in the parsed command list: ( ... ) and $( ... ) restore the
+# working directory tracked by analyze() when they close.
+_OPEN = object()
+_CLOSE = object()
+
 
 class Ask(Exception):
     """Carries the reason of an ask decision."""
@@ -122,20 +136,25 @@ class _Parser(object):
                 cmd.end(out)
                 self.i += 1
                 self._skip_heredocs()
-            elif c in ";&|(":
+            elif c in ";&|":
                 cmd.end(out)
+                self.i += 1
+            elif c == "(":
+                cmd.end(out)
+                out.append(_OPEN)
                 self.i += 1
             elif c == ")":
                 cmd.end(out)
                 self.i += 1
                 if term == ")":
                     return
+                out.append(_CLOSE)
             elif c == "`":
                 self.i += 1
                 if term == "`":
                     cmd.end(out)
                     return
-                self.commands(out, "`")
+                self._scope(out, "`")
                 cmd.add("$()", True)
             elif c == "'":
                 j = s.find("'", self.i + 1)
@@ -160,6 +179,11 @@ class _Parser(object):
                 cmd.add(c)
                 self.i += 1
 
+    def _scope(self, out, term):
+        out.append(_OPEN)
+        self.commands(out, term)
+        out.append(_CLOSE)
+
     def _dollar(self, out, cmd):
         s, n = self.s, len(self.s)
         if s.startswith("$((", self.i):  # arithmetic: skip to the matching ))
@@ -178,8 +202,19 @@ class _Parser(object):
             cmd.add("$(())", True)
         elif s.startswith("$(", self.i):
             self.i += 2
-            self.commands(out, ")")
+            self._scope(out, ")")
             cmd.add("$()", True)
+        elif s.startswith("$'", self.i):  # ANSI-C quoting: a quoted string
+            j = self.i + 2
+            while j < n and s[j] != "'":
+                j += 2 if s[j] == "\\" else 1
+            if j >= n:
+                raise ParseError("unterminated $'' string")
+            cmd.add(s[self.i + 2 : j])
+            self.i = j + 1
+        elif s.startswith('$"', self.i):  # locale string: plain double quotes
+            self.i += 1
+            self._dquote(out, cmd)
         else:
             self.i += 1
             cmd.add("$", True)
@@ -199,7 +234,7 @@ class _Parser(object):
                 self._dollar(out, cmd)
             elif c == "`":
                 self.i += 1
-                self.commands(out, "`")
+                self._scope(out, "`")
                 cmd.add("$()", True)
             elif c == "\\" and s[self.i + 1 : self.i + 2] in ("$", "`", '"', "\\", "\n"):
                 if s[self.i + 1] != "\n":
@@ -304,9 +339,20 @@ def _cd(cur, args):
     return _join(cur, args[0])
 
 
+def _git_env(text):
+    return text.startswith(("GIT_DIR=", "GIT_WORK_TREE="))
+
+
 def analyze(text, cur):
     """Raise Ask when `text` merges or can push to a protected branch."""
+    saved = []
     for words in parse(text):
+        if words is _OPEN:
+            saved.append(cur)
+            continue
+        if words is _CLOSE:
+            cur = saved.pop() if saved else cur
+            continue
         first = words[0].text
         if first == "cd":
             cur = _cd(cur, words[1:])
@@ -317,7 +363,7 @@ def analyze(text, cur):
         for i, word in enumerate(words):
             name = _base(word)
             if name == "git":
-                _git(words, i, cur)
+                _git(words, i, cur, any(_git_env(w.text) for w in words[:i]))
             elif name == "gh":
                 _gh(words, i)
             elif name in SHELLS:
@@ -327,29 +373,20 @@ def analyze(text, cur):
 
 
 def _shell(words, i, cur):
-    j = i + 1
-    while j < len(words):
+    """`sh -c` with a short-flag group containing c: later words are scripts."""
+    for j in range(i + 1, len(words)):
         t = words[j].text
-        if t in ("-o", "-O", "+o", "+O"):
-            j += 2
-        elif t.startswith("--") or t.startswith("+"):
-            j += 1
-        elif t.startswith("-") and len(t) > 1:
-            if "c" in t[1:]:
-                if j + 1 < len(words):
-                    analyze(words[j + 1].text, cur)
-                return
-            j += 1
-        else:
+        if t.startswith("-") and not t.startswith("--") and "c" in t[1:]:
+            for script in words[j + 1 :]:
+                analyze(script.text, cur)
             return
 
 
 def _gh(words, i):
     rest = [w.text for w in words[i + 1 :]]
     merge = Ask("Merging is the user's call (%s): gh pr merge" % SECTION)
-    for a, b in zip(rest, rest[1:]):
-        if a == "pr" and b == "merge":
-            raise merge
+    if "pr" in rest and "merge" in rest[rest.index("pr") + 1 :]:
+        raise merge
     if "api" in rest:
         merge = Ask("Merging is the user's call (%s): gh api merge call" % SECTION)
         for arg in rest[rest.index("api") + 1 :]:
@@ -360,8 +397,9 @@ def _gh(words, i):
                 raise merge
 
 
-def _git(words, i, cur):
-    lost = False  # --git-dir / --work-tree: the repository is not the cwd's
+def _git(words, i, cur, lost):
+    """`lost`: the repository is not the cwd's (GIT_DIR, --git-dir, ...)."""
+    unknown = False  # an option we do not know may hide the subcommand
     j, n = i + 1, len(words)
     while j < n:
         t = words[j].text
@@ -370,7 +408,7 @@ def _git(words, i, cur):
                 return
             cur = _join(cur, words[j + 1])
             j += 2
-        elif t in ("-c", "--namespace", "--super-prefix", "--config-env"):
+        elif t in GIT_GLOBAL_VALUE:
             j += 2
         elif t in ("--git-dir", "--work-tree"):
             lost = True
@@ -379,13 +417,22 @@ def _git(words, i, cur):
             lost = True
             j += 1
         elif t.startswith("-"):
+            unknown = unknown or not (
+                t in GIT_GLOBAL_FLAGS or t.startswith("--exec-path")
+            )
             j += 1
         else:
             break
     else:
         return
-    if words[j].text == "push":
-        _push(words[j + 1 :], None if lost else cur)
+    if not unknown:
+        if words[j].text == "push":
+            _push(words[j + 1 :], None if lost else cur)
+        return
+    for k in range(j, n):  # unknown option: do not let it hide a push
+        if words[k].text == "push":
+            _push(words[k + 1 :], None if lost else cur)
+            return
 
 
 def _push_options(args):
@@ -440,6 +487,8 @@ def _push(args, cur):
         return  # a dry run changes nothing
     if unknown:
         raise undetermined("unknown push option")
+    if any(w.dyn for w in args):
+        raise undetermined("shell expansion in the push arguments")
     if wide:
         raise undetermined("--all, --branches, --mirror, --prune or --repo")
     refspecs = pos[1:]  # pos[0] is the remote
@@ -457,8 +506,8 @@ def _push(args, cur):
         if t == "tag" and k < len(refspecs):
             k += 1
             continue
-        if word.dyn or "*" in t or "$" in t or "`" in t:
-            raise undetermined("refspec with a wildcard or shell expansion")
+        if any(ch in t for ch in "*?[{}"):
+            raise undetermined("refspec with a wildcard or brace expansion")
         if t.startswith("+"):
             t = t[1:]
         if ":" in t:
@@ -482,6 +531,8 @@ def _push(args, cur):
     top = out.strip()
     if rc != 0 or not top:
         raise undetermined("directory is not a resolvable git repository")
+    if not refspecs and _push_config_widens(cur, pos[0].text if pos else None):
+        raise undetermined("push.default=matching or remote.<name>.push is set")
     if current:
         rc, out = _git_run(cur, "symbolic-ref", "-q", "HEAD")
         head = out.strip()
@@ -500,6 +551,25 @@ def _push(args, cur):
     for name in dests:
         if name in names:
             raise _protected(name)
+
+
+def _push_config_widens(cur, remote):
+    """True when configuration makes a refspec-less push reach more branches."""
+    rc, out = _git_run(
+        cur, "config", "--get-regexp", r"^(push\.default|remote\..*\.push)$"
+    )
+    if rc == 1:
+        return False
+    if rc != 0:
+        return True  # unreadable configuration: fail closed
+    for line in out.splitlines():
+        key, _, value = line.partition(" ")
+        if key == "push.default" and value.strip().lower() == "matching":
+            return True
+        if key.startswith("remote.") and key.endswith(".push"):
+            if remote is None or key[len("remote.") : -len(".push")] == remote:
+                return True
+    return False
 
 
 def _protected(name):
@@ -540,6 +610,7 @@ def _declared(top):
                 token = rest.split()[0]
                 names.add(token.strip("`*"))
                 names.add(token.strip("`*_"))
+                names.add(token.strip("`*_.,;:)"))
     names.discard("")
     return names
 
@@ -574,7 +645,8 @@ def _plan_mode(prompt):
 def _mentions_git_or_gh(command):
     import re
 
-    return re.search(r"\b(git|gh)\b", command) is not None
+    bare = re.sub(r"['\"\\]", "", command)  # as the shell joins split words
+    return re.search(r"\b(git|gh)\b", bare) is not None
 
 
 def decide(data):
@@ -599,9 +671,7 @@ def decide(data):
         return None
     cwd = data.get("cwd")
     try:
-        # Cheap filter: nothing below can match without one of these.
-        if any(k in command for k in ("git", "gh", "sh", "eval")):
-            analyze(command, cwd if isinstance(cwd, str) and cwd else None)
+        analyze(command, cwd if isinstance(cwd, str) and cwd else None)
     except Ask as ask:
         return str(ask)
     except Exception:  # ParseError or an internal error: fail closed
