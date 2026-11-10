@@ -93,52 +93,22 @@ position in this section.
 - **MUST** — Test behavior, not implementation. A refactor that preserves
   behavior must not break tests.
 - **DEFAULT** — Name the test after the behavior, not the method under call.
-- **DEFAULT — When delegating TDD work, one subagent per role.** The author of
-  a test must not be the author of the code that makes it pass; otherwise the
-  tests drift toward the implementation and stop being an independent check.
-  Deciding what to test also has its own owner, so coverage is planned rather
-  than left to whoever writes the tests.
-  1. `test-planner` — read-only; turns the requirement into a plan of cases,
-     each with its level (unit, integration, e2e), priority, and reason, plus
-     what is deliberately left untested and any open questions.
-  2. `tdd-test-writer` — implements every case in the plan, shows each fails
-     for the expected reason, and reports the `git hash-object` of every test
-     file it touched.
-  3. `tdd-implementer` — makes them pass without editing those test files. A
-     test it believes is wrong goes back to the orchestrator, not into an edit.
-  4. `doc-writer` — updates docs and config templates; may run in parallel with
-     step 3, since the tests already fix the behavior.
-  5. `reviewer` — read-only; re-runs the checks, compares test-file hashes
-     against step 2, checks coverage against the plan, and reports findings.
-
-  The main session orchestrates: it passes each handoff, owns commits, hands
-  the PR to `pr-manager` (§9), and decides on reviewer findings. It takes the
-  plan to the user only when `test-planner` raises open questions; otherwise
-  the plan goes straight to step 2. Applies even when the request says "a
-  subagent"; only an explicit instruction to use a single agent overrides it.
-  Skip the split for trivial changes (a typo, a one-line fix with no new test).
-- **DEFAULT — Fan out by slice, not by role.** One `test-planner` sees the
-  whole change, since the cases between parts are what a split planner misses;
-  its plan may divide the work into independent slices. Then run one
-  `tdd-test-writer` → `tdd-implementer` chain per slice at the same time, each
-  in its own local branch and git worktree, editing only the files its slice
-  owns. A slice goes to its implementer as soon as its own tests are red,
-  without waiting for the others. The shared slice runs first, and cases that
-  span slices run after the slice branches are merged. Docs belong to no slice;
-  `doc-writer` and `reviewer` each run once. The orchestrator creates each
-  worktree without leaving the main checkout, makes it able to run the tests,
-  passes its absolute path to the slice's agents, merges the branches back, and
-  removes the worktrees after `reviewer` passes. A slice that needs a file it
-  does not own goes back to the orchestrator instead of editing it. Run at most
-  four slices at once, and never two at once that share an external resource
-  (database, fixed port, container). A plan with one slice runs the sequential
-  flow above.
+- **DEFAULT — A behavior change goes through the `delegated-tdd` skill.** Load
+  it before writing or changing production code; it carries the procedure.
+  What it protects: a failing test is committed before the code that passes
+  it, and is not edited afterwards; the author of a test is not the author of
+  the code that makes it pass, or the tests drift toward the implementation
+  and stop being an independent check; one `test-planner` sees the whole
+  change and one `reviewer` checks it before a PR. Parallel work fans out by
+  slice, not by role. Skip the skill for trivial changes (a typo, a one-line
+  fix with no new test). Only an explicit instruction to use a single agent
+  overrides the split; a request for "a subagent" does not.
 - **MUST — Workflow instructions do not override delegation.** When a slash
   command, skill, or workflow template tells the agent to implement work, it
-  defines *what* to build, not *who* builds it; the TDD delegation above still
-  applies. Spec and task artifacts are inputs: every specified scenario becomes
-  at least one case in the test plan, and the orchestrator marks a task done
-  only after `reviewer` passes it.
+  defines *what* to build, not *who* builds it; the `delegated-tdd` skill
+  still applies. Spec and task artifacts are inputs: every specified scenario
+  becomes at least one case in the test plan, and the orchestrator marks a
+  task done only after `reviewer` passes it.
 
 ## 3. Data and distributed systems
 

@@ -85,6 +85,9 @@ written; with none, the plan goes straight to tdd-test-writer.
 
 ## Output
 
+The orchestrator saves your output unchanged as the plan file that every later
+step reads, so it must stand on its own.
+
 1. **Context**: available test levels and how they run; existing coverage
    relevant to the change.
 2. **Plan**: a table with columns ID, Requirement, Case, Level, Priority, Why
