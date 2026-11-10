@@ -101,11 +101,14 @@ ignores `git push --dry-run`.
 Not covered: commands run over `ssh`; shell and git aliases, and shell
 functions; scripts that push or merge internally, including a script given to
 a shell on standard input (heredoc, here-string, or pipe); a command name that
-comes from a variable; shells other than `bash`, `sh` and `zsh`; `curl`
+comes from a variable; the dashed `git-push` form; a destination written as
+`heads/<name>` (git resolves `HEAD:heads/main` to `main`); escape sequences
+inside `$'…'`, such as `$'\x6dain'`; `GIT_DIR` or `GIT_WORK_TREE` exported in
+an earlier statement; shells other than `bash`, `sh` and `zsh`; `curl`
 against the GitHub API; a substitution inside the body of an unquoted heredoc;
-and Claude Code versions where the subagent tool is not named `Agent`. It is a
-backstop for a push or merge written as a command on the command line, not a
-sandbox.
+and Claude Code versions where the subagent tool is not named `Agent`. The
+list is not exhaustive: the gate is a backstop for a push or merge written the
+usual way on the command line, not a sandbox.
 
 Requirements: `python3` (written for 3.8 or later, verified only on 3.9.6) and
 `git` on `PATH`. If `python3` is missing, the hook fails without blocking, so
