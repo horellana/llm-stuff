@@ -214,6 +214,9 @@ position in this section.
   to an integration or production branch, or enables auto-merge without the
   user's explicit approval for that specific PR in the current conversation.
   Merges into production are never automated.
+- **MUST** — A hook may ask the user to confirm a merge, a push, or a release
+  step. Never reword, wrap, or split a command to avoid a confirmation or a
+  denial; if one is declined, stop and report.
 - **DEFAULT** — Branch flow: topic branches (`feat/*`, `fix/*`, …) → integration
   branch → production branch. Each project's `CLAUDE.md` declares both, e.g.
   `Integration branch: dev` and `Production branch: main`. If either is
@@ -232,7 +235,9 @@ position in this section.
   rollback that has never been exercised is a risk to state in the plan.
 - **DEFAULT** — Delegate release planning and execution to the
   `release-manager` subagent. How to deploy comes from each project's runbook;
-  without one, it drafts a runbook for review instead of deploying.
+  without one, it drafts a runbook for review instead of deploying. Start its
+  prompt with the line `mode: plan` or `mode: execute <environment>`; anything
+  but plan mode asks the user to confirm.
 
 ---
 
