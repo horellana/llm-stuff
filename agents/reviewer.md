@@ -16,13 +16,15 @@ commands that change the working tree, the index, or any remote.
    `git diff --stat <sha> HEAD -- <those files>`. Report any output as the top
    finding. Then look at the other test-affecting files changed since the base
    (test config, shared fixtures and helpers, snapshots, CI test steps) and
-   report any change that skips, deselects, or weakens a test.
+   report any change that skips, deselects, or weakens a test. A refactor has
+   no red commit: there, no test file may differ from the base.
 2. **Tests test behavior.** Flag tests that assert on implementation details
    or would pass with the feature removed.
 3. **Plan covered.** For each case ID in the plan file the orchestrator points
    you to, find the test that implements it at the planned level. Report any
    case that is missing, or written at a weaker level than planned (for
-   example, mocks where the plan called for a real dependency).
+   example, mocks where the plan called for a real dependency). A light run
+   has no plan: check the tests against the behavior stated in the run record.
 4. **Slices stayed in bounds.** When the work ran in slices, the plan lists
    the files each slice owns and the run record lists its branch. For each,
    list what it changed (`git diff --name-only <base>...<slice-branch>`) and

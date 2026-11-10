@@ -94,15 +94,16 @@ position in this section.
   behavior must not break tests.
 - **DEFAULT** — Name the test after the behavior, not the method under call.
 - **DEFAULT — A behavior change goes through the `delegated-tdd` skill.** Load
-  it before writing or changing production code; it carries the procedure.
-  What it protects: a failing test is committed before the code that passes
-  it, and is not edited afterwards; the author of a test is not the author of
-  the code that makes it pass, or the tests drift toward the implementation
-  and stop being an independent check; one `test-planner` sees the whole
-  change and one `reviewer` checks it before a PR. Parallel work fans out by
-  slice, not by role. Skip the skill for trivial changes (a typo, a one-line
-  fix with no new test). Only an explicit instruction to use a single agent
-  overrides the split; a request for "a subagent" does not.
+  it before writing or changing production code; it picks the tier (trivial,
+  light, full) and carries the procedure. What it protects in every tier
+  above trivial: a failing test is committed before the code that passes it,
+  and is not edited afterwards; `reviewer` checks the result before a PR. In
+  the full tier the author of a test is not the author of the code that makes
+  it pass, or the tests drift toward the implementation and stop being an
+  independent check, and one `test-planner` sees the whole change. Parallel
+  work fans out by slice, not by role. Only an explicit instruction to use a
+  single agent overrides the full tier's split; a request for "a subagent"
+  does not.
 - **MUST — Workflow instructions do not override delegation.** When a slash
   command, skill, or workflow template tells the agent to implement work, it
   defines *what* to build, not *who* builds it; the `delegated-tdd` skill
