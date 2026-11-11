@@ -398,6 +398,143 @@ class PushDestinationTest(GateCase):
         self.sb.git(simple, "config", "push.default", "simple")
         self.check_silent("git push", simple)
 
+    # H1
+    def test_explicit_destination_with_heads_prefix_reaches_the_protected_branch(self):
+        self.check_ask(
+            [
+                "git push origin HEAD:heads/main",
+                "git push origin +HEAD:heads/main",
+                "git push origin @:heads/main",
+                "git push origin feature:heads/main",
+            ],
+            self.basic,
+            protected("main"),
+        )
+        self.check_ask(
+            "git push origin feature:heads/master", self.basic, protected("master")
+        )
+
+    # H2
+    def test_refspec_without_destination_with_heads_prefix_asks(self):
+        self.check_ask(
+            ["git push origin heads/main", "git push origin +heads/main"],
+            self.basic,
+            protected("main"),
+        )
+
+    # H3
+    def test_deleting_a_protected_branch_written_with_heads_prefix_asks(self):
+        self.check_ask(
+            [
+                "git push origin :heads/main",
+                "git push origin --delete heads/main",
+                "git push origin -d heads/main",
+                "git push -d origin heads/main",
+            ],
+            self.basic,
+            protected("main"),
+        )
+
+    # H4
+    def test_declared_protected_branch_written_with_heads_prefix_asks(self):
+        repo = self.sb.declared("decl")
+        self.check_ask(
+            [
+                "git push origin HEAD:heads/prod",
+                "git push origin +heads/prod",
+                "git push origin --delete heads/prod",
+            ],
+            repo,
+            protected("prod"),
+        )
+        self.check_ask(
+            ["git push origin heads/dev", "git push origin :heads/dev"],
+            repo,
+            protected("dev"),
+        )
+
+    # H5
+    def test_remote_default_branch_written_with_heads_prefix_asks(self):
+        repo = self.sb.remote()
+        self.check_ask(
+            ["git push origin HEAD:heads/trunk", "git push origin heads/trunk"],
+            repo,
+            protected("trunk"),
+        )
+
+    # H6
+    def test_heads_prefix_is_recognised_when_the_repository_is_unknown(self):
+        self.check_ask(
+            "git --git-dir=.git push origin HEAD:heads/main",
+            self.basic,
+            protected("main"),
+        )
+
+    # H7
+    def test_heads_prefix_is_stripped_once_from_a_declared_name_that_has_it(self):
+        repo = self.sb.make_repo("hp")
+        self.sb.declare(repo, "Production branch: heads/prod")
+        self.check_ask(
+            "git push origin HEAD:heads/heads/prod", repo, protected("heads/prod")
+        )
+
+    # H8
+    def test_literal_reading_of_a_declared_heads_name_keeps_asking(self):
+        repo = self.sb.make_repo("hp")
+        self.sb.declare(repo, "Production branch: heads/prod")
+        self.check_ask(
+            [
+                "git push origin HEAD:heads/prod",
+                "git push origin HEAD:refs/heads/heads/prod",
+            ],
+            repo,
+            protected("heads/prod"),
+        )
+        self.check_silent("git push origin HEAD:prod", repo)
+
+    # H9
+    def test_heads_prefix_on_an_unprotected_branch_is_silent(self):
+        self.check_silent(
+            [
+                "git push origin HEAD:heads/topic",
+                "git push origin heads/topic",
+                "git push origin heads/feature",
+            ],
+            self.basic,
+        )
+
+    # H10
+    def test_a_branch_literally_named_heads_main_is_not_main(self):
+        self.check_silent(
+            [
+                "git push origin HEAD:refs/heads/heads/main",
+                "git push origin HEAD:heads/heads/main",
+            ],
+            self.basic,
+        )
+
+    # H11
+    def test_heads_main_under_other_namespaces_is_not_a_branch(self):
+        self.check_silent(
+            [
+                "git push origin HEAD:tags/main",
+                "git push origin HEAD:refs/tags/main",
+                "git push origin HEAD:remotes/origin/main",
+                "git push origin tag heads/main",
+            ],
+            self.basic,
+        )
+
+    # H12
+    def test_heads_prefix_only_counts_on_the_destination_side(self):
+        self.check_silent(
+            [
+                "git push origin heads/main:feature",
+                "git push origin main:heads/feature",
+            ],
+            self.basic,
+        )
+
 
 if __name__ == "__main__":
     import unittest
