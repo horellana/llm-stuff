@@ -80,7 +80,8 @@ backs up the approval rules of `AGENTS.md` §9. It asks you to confirm:
   (a `merge` or `merges` path segment, or the `mergePullRequest` and
   `enablePullRequestAutoMerge` mutations). A `GET` on a merge path asks too.
 - **Pushes that can reach a protected branch**: every `git push` in the command
-  is resolved to its destination branches. It asks if any is protected.
+  is resolved to its destination branches. It asks if any is protected, however
+  the refspec writes it (`main`, `heads/main` or `refs/heads/main`).
 - **`release-manager` runs** whose prompt does not start with `mode: plan`.
 
 Protected branches are the union of:
@@ -101,10 +102,9 @@ ignores `git push --dry-run`.
 Not covered: commands run over `ssh`; shell and git aliases, and shell
 functions; scripts that push or merge internally, including a script given to
 a shell on standard input (heredoc, here-string, or pipe); a command name that
-comes from a variable; the dashed `git-push` form; a destination written as
-`heads/<name>` (git resolves `HEAD:heads/main` to `main`); escape sequences
-inside `$'…'`, such as `$'\x6dain'`; `GIT_DIR` or `GIT_WORK_TREE` exported in
-an earlier statement; shells other than `bash`, `sh` and `zsh`; `curl`
+comes from a variable; the dashed `git-push` form; escape sequences inside
+`$'…'`, such as `$'\x6dain'`; `GIT_DIR` or `GIT_WORK_TREE` exported in an
+earlier statement; shells other than `bash`, `sh` and `zsh`; `curl`
 against the GitHub API; a substitution inside the body of an unquoted heredoc;
 and Claude Code versions where the subagent tool is not named `Agent`. The
 list is not exhaustive: the gate is a backstop for a push or merge written the
