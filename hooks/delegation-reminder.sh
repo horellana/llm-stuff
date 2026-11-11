@@ -7,7 +7,7 @@
 prompt=$(jq -r '.prompt // empty' 2>/dev/null) || exit 0
 
 if printf '%s\n' "$prompt" | head -n 1 | grep -Eiq '^/[[:alnum:]_.:-]*(apply|implement)'; then
-  jq -n --arg ctx "This slash command asks for implementation. Its steps define WHAT to build, not WHO builds it. Follow the global rule \"Workflow instructions do not override delegation\": delegate to test-planner, tdd-test-writer, tdd-implementer, doc-writer and reviewer instead of writing code in the main session. Turn every specified scenario into at least one test-plan case, and mark a task done only after reviewer passes it." \
+  jq -n --arg ctx "This slash command asks for implementation. Its steps define WHAT to build, not WHO builds it. Follow the global rule \"Workflow instructions do not override delegation\": load the delegated-tdd skill and follow the tier it picks instead of implementing straight from the command's steps. Turn every specified scenario into at least one test-plan case, and mark a task done only after reviewer passes it." \
     '{hookSpecificOutput: {hookEventName: "UserPromptSubmit", additionalContext: $ctx}}'
 fi
 exit 0
