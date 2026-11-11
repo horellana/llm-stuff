@@ -518,8 +518,13 @@ def _push(args, cur):
             current = True
         elif t.startswith("refs/tags/"):
             continue
+        elif t.startswith("refs/heads/"):
+            dests.append(t[len("refs/heads/") :])
         else:
-            dests.append(t[len("refs/heads/") :] if t.startswith("refs/heads/") else t)
+            dests.append(t)
+            if t.startswith("heads/") and len(t) > len("heads/"):
+                # git may resolve `heads/<name>` to refs/heads/<name>
+                dests.append(t[len("heads/") :])
     if not dests and not current:
         return
     for name in dests:
