@@ -127,6 +127,7 @@ Tests: `python3 -m unittest discover -s tests` from the repo root.
 | Agent | Role |
 |---|---|
 | `test-planner` | Read-only. Decides which cases to test, at which level, and what to leave out. Raises open questions. |
+| `test-plan-reviewer` | Read-only. Reviews the plan before any test is written: cuts cases that would catch no real bug, names missing ones, checks levels and slices. Never edits the plan. |
 | `tdd-test-writer` | Implements the plan as failing tests and proves they fail. Never writes production code. |
 | `tdd-implementer` | Makes the tests pass without editing them. |
 | `doc-writer` | Updates docs and config templates. Never touches code or tests. |
@@ -144,13 +145,15 @@ Behavior changes go through the `delegated-tdd` skill, which picks a tier first:
 Refactors, docs-only changes and spikes are not behavior changes and have
 their own rule in the skill.
 
-The full pipeline runs in this order: `test-planner` → `tdd-test-writer` →
-`tdd-implementer` (with `doc-writer` in parallel) → `reviewer` → `pr-manager`.
-The main session passes each handoff and owns commits. The red tests are
-committed, and `reviewer` diffs against that commit. The plan and the commit
-SHAs live in a self-ignoring `.tdd/<slug>/` directory in the project. The user
-sees the test plan only when it has open questions, and merges always wait for
-the user.
+The full pipeline runs in this order: `test-planner` → `test-plan-reviewer` →
+`tdd-test-writer` → `tdd-implementer` (with `doc-writer` in parallel) →
+`reviewer` → `pr-manager`. The main session passes each handoff and owns
+commits. The plan is reviewed once: the planner applies the findings it agrees
+with and turns the ones it rejects into open questions. The red tests are
+committed, and `reviewer` diffs against that commit. The plan, its review, and
+the commit SHAs live in a self-ignoring `.tdd/<slug>/` directory in the
+project. The user sees the test plan only when it has open questions, and
+merges always wait for the user.
 
 When the plan divides the work into independent slices, the writer and
 implementer steps run once per slice, at the same time, each slice in its own
@@ -166,9 +169,10 @@ verifies it, and rolls back on its own if a check misses its criterion. It
 deploys only by a project's runbook (for example a deploy skill); without one,
 it drafts a runbook for review.
 
-`test-planner` and `release-manager` run on Opus: a case missing from the plan
-goes untested all the way down, and a release mistake reaches production. The
-other agents run on Sonnet.
+`test-planner`, `test-plan-reviewer`, and `release-manager` run on Opus: a
+case missing from the plan goes untested all the way down, a reviewer weaker
+than the planner cannot see what it missed, and a release mistake reaches
+production. The other agents run on Sonnet.
 
 ## Per-project setup
 

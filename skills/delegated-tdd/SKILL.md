@@ -1,13 +1,13 @@
 ---
 name: delegated-tdd
-description: Run a behavior change at the right weight. Picks the tier (trivial, light, full) and, for the full tier, drives role-separated subagents (test-planner, tdd-test-writer, tdd-implementer, doc-writer, reviewer), in parallel slices when the plan allows. Load before writing or changing production code for a feature, bug fix, or other behavior change, and whenever a slash command, skill, or workflow says to apply or implement work.
+description: Run a behavior change at the right weight. Picks the tier (trivial, light, full) and, for the full tier, drives role-separated subagents (test-planner, test-plan-reviewer, tdd-test-writer, tdd-implementer, doc-writer, reviewer), in parallel slices when the plan allows. Load before writing or changing production code for a feature, bug fix, or other behavior change, and whenever a slash command, skill, or workflow says to apply or implement work.
 ---
 
 # Delegated TDD
 
 You are the orchestrator. You pick the tier, pass each handoff, own every
-commit, and decide on reviewer findings. In the full tier you do not write the
-tests or the code.
+commit, and decide on `reviewer` findings. In the full tier you do not write
+the plan, the tests, or the code.
 
 What this procedure protects, in every tier above trivial:
 
@@ -20,6 +20,7 @@ And in the full tier:
 
 - The author of a test is not the author of the code that makes it pass.
 - One `test-planner` sees the whole change.
+- `test-plan-reviewer` reviews the plan before any test is written.
 
 ## Pick the tier
 
@@ -83,6 +84,7 @@ mkdir -p .tdd/<slug> && printf '*\n' > .tdd/.gitignore
 by accident. It holds, per run:
 
 - `plan.md`: the planner's output, unchanged (full tier).
+- `plan-review.md`: the plan reviewer's report, unchanged (full tier).
 - `run.md`: what the run is and where it stands. Update it after every step,
   and read it first when you resume a run.
 - `outcome.json`: written at the end (section 6).
@@ -109,7 +111,16 @@ content.
    any spec or task artifacts, and the base ref. Every scenario in a spec
    becomes at least one case in the plan.
 3. Save its output as `plan.md`, unchanged.
-4. Open questions go to the user before any test is written. Write the answers
+4. Spawn `test-plan-reviewer` with the same requirement and artifacts, the
+   base ref, and the path of `plan.md`. Save its report as `plan-review.md`,
+   unchanged.
+5. On `revise`, spawn `test-planner` again with the paths of `plan.md` and
+   `plan-review.md`, and replace `plan.md` with the revised plan it returns.
+   The planner applies the findings it agrees with and turns each one it
+   rejects into an open question; you do not edit the plan or settle a
+   finding yourself. The plan is reviewed once: the revision does not go back
+   to `test-plan-reviewer`.
+6. Open questions go to the user before any test is written. Write the answers
    into `plan.md`, and run the planner again if they change the cases. With no
    open questions, continue without showing the plan.
 
@@ -203,8 +214,8 @@ jq -n --arg date "$(date +%F)" --arg repo "<repo>" --arg task "<slug>" \
 ```
 
 - `agents`: subagents spawned, re-runs included.
-- `findings_real`, `findings_noise`: reviewer findings that led to a change,
-  and those you rejected.
+- `findings_real`, `findings_noise`: `reviewer` findings that led to a change,
+  and those you rejected. Plan-review findings are not counted here.
 - `checks_hit`: which of the reviewer's numbered checks produced a real
   finding.
 - `red_edits`: edits to a red commit's files that the review caught.

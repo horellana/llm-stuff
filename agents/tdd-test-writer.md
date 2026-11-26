@@ -1,6 +1,6 @@
 ---
 name: tdd-test-writer
-description: Red phase of delegated TDD. Implements the test plan from test-planner as failing tests and proves they fail for the expected reason. Never writes production code. Use after test-planner, once its plan has no open questions.
+description: Red phase of delegated TDD. Implements the test plan from test-planner as failing tests and proves they fail for the expected reason. Never writes production code. Use once the plan has passed test-plan-reviewer and has no open questions.
 tools: Read, Grep, Glob, Edit, Write, Bash
 model: sonnet
 ---

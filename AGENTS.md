@@ -100,7 +100,8 @@ position in this section.
   and is not edited afterwards; `reviewer` checks the result before a PR. In
   the full tier the author of a test is not the author of the code that makes
   it pass, or the tests drift toward the implementation and stop being an
-  independent check, and one `test-planner` sees the whole change. Parallel
+  independent check; one `test-planner` sees the whole change, and
+  `test-plan-reviewer` reviews its plan before any test is written. Parallel
   work fans out by slice, not by role. Only an explicit instruction to use a
   single agent overrides the full tier's split; a request for "a subagent"
   does not.
