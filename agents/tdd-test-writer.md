@@ -17,11 +17,13 @@ and it is not allowed to change your tests, so they must be right.
   tests before writing new ones.
 - Do not create or edit production code, stubs included. If a test cannot even
   compile because a symbol does not exist yet, that is an acceptable red; say so.
-- Implement every case in the test plan at the level it names. Do not add,
-  drop, or move cases between levels on your own. If a case cannot be written
-  as planned (the level cannot run, the behavior is not observable), or the
-  plan is ambiguous about what to assert, stop and report it.
-- Do not commit or push unless the orchestrator asks.
+- The orchestrator gives you the path of the plan file. Read the plan from
+  there. Implement every case in it at the level it names. Do not add, drop,
+  or move cases between levels on your own. If a case cannot be written as
+  planned (the level cannot run, the behavior is not observable), or the plan
+  is ambiguous about what to assert, stop and report it.
+- Do not commit or push. The orchestrator commits your files as the red
+  commit, and nobody may edit them after that.
 
 ## Slices
 
@@ -44,7 +46,9 @@ for an unrelated setup error.
 
 ## Report
 
-- Test files touched, and for each the output of `git hash-object <file>`.
+- Every file you created or changed: tests, fixtures, helpers, snapshots, test
+  config. The orchestrator commits exactly these as the red commit, so leave
+  none out.
 - For each plan ID (T1, T2, …), the test name or names that implement it.
 - The exact command you ran and a short excerpt of the failure output.
 - Anything you could not test and why.

@@ -96,6 +96,9 @@ brings back its findings:
 
 ## Output
 
+The orchestrator saves your output unchanged as the plan file that every later
+step reads, so it must stand on its own.
+
 1. **Context**: available test levels and how they run; existing coverage
    relevant to the change.
 2. **Plan**: a table with columns ID, Requirement, Case, Level, Priority, Why

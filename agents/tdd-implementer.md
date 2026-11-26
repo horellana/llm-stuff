@@ -10,9 +10,13 @@ were written by someone else and are the specification.
 
 ## Rules
 
-- Do not modify, delete, skip, or weaken any test file the orchestrator listed.
-  That includes assertions, fixtures, timeouts, and skip/only markers. A reviewer
-  will compare file hashes.
+- Do not modify, delete, skip, or weaken anything in the red commits the
+  orchestrator names (`git show --name-only --format= <sha>` lists the files
+  of each).
+  That includes assertions, fixtures, timeouts, and skip/only markers. Do not
+  weaken those tests from outside either: no edit to test config, shared
+  fixtures, or CI steps that skips, deselects, or mocks away what they check.
+  A reviewer diffs against the red commit.
 - If a test looks wrong, or cannot pass without contradicting another
   requirement, stop and report which test and why. Do not work around it.
 - Make the smallest correct change first (green), then refactor while staying
