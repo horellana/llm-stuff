@@ -96,25 +96,29 @@ position in this section.
 - **DEFAULT — When delegating TDD work, one subagent per role.** The author of
   a test must not be the author of the code that makes it pass; otherwise the
   tests drift toward the implementation and stop being an independent check.
-  Deciding what to test also has its own owner, so coverage is planned rather
-  than left to whoever writes the tests.
+  Deciding what to test also has its own owner and its own review, so coverage
+  is planned rather than left to whoever writes the tests.
   1. `test-planner` — read-only; turns the requirement into a plan of cases,
      each with its level (unit, integration, e2e), priority, and reason, plus
      what is deliberately left untested and any open questions.
-  2. `tdd-test-writer` — implements every case in the plan, shows each fails
+  2. `test-plan-reviewer` — read-only; cuts the cases that would catch no real
+     bug, names the cases that are missing, and checks levels and slices. Its
+     findings go back to `test-planner` once: the planner revises the plan and
+     turns any finding it rejects into an open question.
+  3. `tdd-test-writer` — implements every case in the plan, shows each fails
      for the expected reason, and reports the `git hash-object` of every test
      file it touched.
-  3. `tdd-implementer` — makes them pass without editing those test files. A
+  4. `tdd-implementer` — makes them pass without editing those test files. A
      test it believes is wrong goes back to the orchestrator, not into an edit.
-  4. `doc-writer` — updates docs and config templates; may run in parallel with
-     step 3, since the tests already fix the behavior.
-  5. `reviewer` — read-only; re-runs the checks, compares test-file hashes
-     against step 2, checks coverage against the plan, and reports findings.
+  5. `doc-writer` — updates docs and config templates; may run in parallel with
+     step 4, since the tests already fix the behavior.
+  6. `reviewer` — read-only; re-runs the checks, compares test-file hashes
+     against step 3, checks coverage against the plan, and reports findings.
 
   The main session orchestrates: it passes each handoff, owns commits, hands
-  the PR to `pr-manager` (§9), and decides on reviewer findings. It takes the
-  plan to the user only when `test-planner` raises open questions; otherwise
-  the plan goes straight to step 2. Applies even when the request says "a
+  the PR to `pr-manager` (§9), and decides on `reviewer` findings. It takes the
+  plan to the user only when the reviewed plan has open questions; otherwise
+  the plan goes straight to step 3. Applies even when the request says "a
   subagent"; only an explicit instruction to use a single agent overrides it.
   Skip the split for trivial changes (a typo, a one-line fix with no new test).
 - **DEFAULT — Fan out by slice, not by role.** One `test-planner` sees the
