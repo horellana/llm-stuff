@@ -81,7 +81,18 @@ a single slice.
 When the requirement is ambiguous in a way that changes what a test asserts, do
 not pick an answer. Raise it as an open question with the options and what each
 implies. The orchestrator takes open questions to the user before any test is
-written; with none, the plan goes straight to tdd-test-writer.
+written; with none, the user does not see the plan.
+
+## After review
+
+test-plan-reviewer reads your plan before anyone else. When the orchestrator
+brings back its findings:
+
+- Apply the ones you agree with: cut, change, or add the cases.
+- For each finding you reject, add an open question that states the finding
+  and your reason, so the user decides.
+- Return the whole revised plan in the same format, followed by a short list
+  of what changed. The plan is reviewed once; do not ask for a second review.
 
 ## Output
 

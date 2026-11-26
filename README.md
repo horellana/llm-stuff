@@ -64,6 +64,7 @@ command, is covered only by the rule in `AGENTS.md`.
 | Agent | Role |
 |---|---|
 | `test-planner` | Read-only. Decides which cases to test, at which level, and what to leave out. Raises open questions. |
+| `test-plan-reviewer` | Read-only. Reviews the plan before any test is written: cuts cases that would catch no real bug, names missing ones, checks levels and slices. Never edits the plan. |
 | `tdd-test-writer` | Implements the plan as failing tests and proves they fail. Never writes production code. |
 | `tdd-implementer` | Makes the tests pass without editing them. |
 | `doc-writer` | Updates docs and config templates. Never touches code or tests. |
@@ -71,9 +72,11 @@ command, is covered only by the rule in `AGENTS.md`.
 | `pr-manager` | Opens PRs with English titles and descriptions, and prepares merges. Never merges. |
 | `release-manager` | Plans releases (artifact, baseline, checks, rollback), then deploys one approved environment at a time by the project's runbook, verifies, and rolls back immediately on a failed check. |
 
-Delegated TDD work runs in this order: `test-planner` → `tdd-test-writer` →
-`tdd-implementer` (with `doc-writer` in parallel) → `reviewer` → `pr-manager`.
-The main session passes each handoff and owns commits. The user sees the test
+Delegated TDD work runs in this order: `test-planner` → `test-plan-reviewer`
+→ `tdd-test-writer` → `tdd-implementer` (with `doc-writer` in parallel) →
+`reviewer` → `pr-manager`. The main session passes each handoff and owns
+commits. The plan is reviewed once: the planner applies the findings it agrees
+with and turns the ones it rejects into open questions. The user sees the test
 plan only when it has open questions, and merges always wait for the user.
 
 When the plan divides the work into independent slices, the writer and
@@ -89,9 +92,10 @@ verifies it, and rolls back on its own if a check misses its criterion. It
 deploys only by a project's runbook (for example a deploy skill); without one,
 it drafts a runbook for review.
 
-`test-planner` and `release-manager` run on Opus: a case missing from the plan
-goes untested all the way down, and a release mistake reaches production. The
-other agents run on Sonnet.
+`test-planner`, `test-plan-reviewer`, and `release-manager` run on Opus: a
+case missing from the plan goes untested all the way down, a reviewer weaker
+than the planner cannot see what it missed, and a release mistake reaches
+production. The other agents run on Sonnet.
 
 ## Per-project setup
 
